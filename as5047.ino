@@ -1,7 +1,7 @@
 
 // inslude the SPI library:
 #include <SPI.h>
-// set pin 10 as the slave select for the digital pot:
+// set pin 10 as the slave select for the encoder:
 const int CSn = 7;
 
 void setup() {
@@ -29,7 +29,7 @@ boolean calc_even_parity(word inbyte) {
   int x = 13;
   boolean calculated_parity = 0;
   while(x)
-    calculated_parity = calculated_parity ^ ( (data << (13-x)) >> x--);
+    calculated_parity = calculated_parity ^ ( (data << (13-x)) >> x--); // this is stunningly opaque.
   return calculated_parity;
 }
 boolean check_parity (word inbyte) {    // not currently using this routine
@@ -78,29 +78,30 @@ void loop() {
   word angleunc_p = 0x7FFE;
   word anglecom_p = 0xFFFF;
   word diaagc_p = 0xFFFC;
+  word mask_results = 0b0011111111111111; // this grabs the returned data without the read/write or parity bits.
   
   while (1)
   {
-    result = readRegister(anglecom_p, 3);
-    result = result & 0b0011111111111111;
+    result = readRegister(anglecom_p, 3); // I'm precomputing the parity
+    result = result & mask_results; //   and masking out the resulting parity and read/write bits
     Serial.print("received data register: ");
     Serial.println(result, DEC);
     result = 0;
     delay(1000);
     result = readRegister(angleunc_p, 3);
-    result = result & 0b0011111111111111;
+    result = result & mask_results;
     Serial.print("received uncor data register: ");
     Serial.println(result, DEC);
     result = 0;
     delay(1000);
     result = readRegister(errfl_p, 3);
-    result = result & 0b0011111111111111;
+    result = result & mask_results;
     Serial.print("received err register: ");
     Serial.println(result, DEC);
     result = 0;
     delay(1000);
     result = readRegister(diaagc_p, 3);
-    result = result & 0b0011111111111111;
+    result = result & mask_results;
     Serial.print("received diag/agc register: ");
     Serial.println(result, DEC);
     result = 0;
